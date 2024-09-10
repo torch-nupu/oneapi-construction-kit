@@ -96,6 +96,8 @@ add_ca_library(riscv STATIC
 
 target_include_directories(riscv PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
+target_compile_options(riscv PRIVATE "-Wno-error=unused-lambda-capture")
+
 target_compile_options(riscv PRIVATE
   $<$<BOOL:${UNIX}>:-Wno-unused-parameter>)
 target_link_libraries(riscv PUBLIC
