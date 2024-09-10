@@ -37,6 +37,8 @@ using create_hal_fn = hal_t *(*)(uint32_t &);
 std::string get_hal_library_path(const char *device_name) {
 #if defined(_WIN32)
   return std::string("hal_") + device_name + std::string(".dll");
+#elif defined(__APPLE__)
+  return std::string("libhal_") + device_name + std::string(".dylib");
 #else
   return std::string("libhal_") + device_name + std::string(".so");
 #endif

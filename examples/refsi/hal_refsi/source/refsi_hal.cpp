@@ -327,7 +327,7 @@ bool refsi_hal_device::mem_fill(hal::hal_addr_t dst, const void *pattern,
                  (const uint8_t *)pattern + pattern_size);
   }
   while (size >= pattern_size) {
-    size_t to_write = std::min(size, chunk.size());
+    size_t to_write = std::min(static_cast<size_t>(size), chunk.size());
     if (!mem_write(dst, chunk.data(), to_write, locker)) {
       return false;
     }
