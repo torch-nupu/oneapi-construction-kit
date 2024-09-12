@@ -150,6 +150,9 @@ ca_option(CA_USE_SPLIT_DWARF BOOL
   "Use split DWARF debuginfo for faster link times and smaller executables"
   ON)
 
+# options for private usage
+ca_option(CA_BUILD_SPIRV_TOOLS BOOL "build spirv-tools from src" OFF)
+
 if(CMAKE_MAKE_PROGRAM MATCHES ninja)
   ca_option(CA_PARALLEL_LINK_JOBS STRING
     "Number of parallel link jobs (Ninja only)." "2")
