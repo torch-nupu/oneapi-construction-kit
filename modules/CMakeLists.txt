@@ -51,6 +51,17 @@ if(NOT (OCK_IN_LLVM_TREE AND "llvm-spirv" IN_LIST LLVM_ENABLE_PROJECTS))
   if(NOT spirv-headers_POPULATED)
     message(FATAL_ERROR "No SPIRV-Headers found.")
   endif()
+
+  if(CA_BUILD_SPIRV_TOOLS)
+    FetchContent_Declare(
+      SPIRV-Tools
+      GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Tools.git
+      GIT_TAG        vulkan-sdk-1.3.275.0
+      GIT_SHALLOW 1
+    )
+    set(SPIRV_SKIP_TESTS ON)
+    FetchContent_MakeAvailable(SPIRV-Tools)
+  endif()
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/mux)
