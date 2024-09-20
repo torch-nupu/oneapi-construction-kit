@@ -29,4 +29,8 @@ TODO
 # OpenCL kernels stored for debugging purposes
 *cl_program_*.cl
 
+CMakePresets.json
 CMakeUserPresets.json
+
+# ln -s
+huca_refsi

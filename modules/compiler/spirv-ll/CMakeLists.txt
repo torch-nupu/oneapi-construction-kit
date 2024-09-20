@@ -71,6 +71,8 @@ target_include_directories(spirv-ll SYSTEM PUBLIC
   ${spirv-headers_SOURCE_DIR}/include)
 target_link_libraries(spirv-ll PUBLIC cargo multi_llvm compiler-pipeline LLVMCore LLVMBitWriter)
 
+target_compile_options(spirv-ll PRIVATE "-Wno-error=unused-but-set-variable")
+
 add_subdirectory(tools)
 if(CA_ENABLE_TESTS)
   add_subdirectory(test)

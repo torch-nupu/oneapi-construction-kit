@@ -127,6 +127,8 @@ target_compile_definitions(compiler-pipeline PRIVATE
   $<$<BOOL:${CA_PLATFORM_ANDROID}>:CA_PLATFORM_ANDROID>
   $<$<BOOL:${CA_PLATFORM_QNX}>:CA_PLATFORM_QNX>)
 
+target_compile_options(compiler-pipeline PRIVATE "-Wno-error=unused-but-set-variable")
+
 target_link_libraries(compiler-pipeline PUBLIC
  multi_llvm LLVMPasses LLVMTransformUtils)
 if(TARGET LLVMCore)
