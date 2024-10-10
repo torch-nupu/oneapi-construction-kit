@@ -113,6 +113,7 @@ Expected<std::unique_ptr<MemoryBuffer>> lldLinkToBinary(
                              "unable to open temporary object file");
   }
   if (fwrite(rawBinary.data(), 1, rawBinary.size(), f) != rawBinary.size()) {
+    (void)fclose(f);
     return createStringError(inconvertibleErrorCode(),
                              "unable to write binary to temporary object file");
   }
@@ -128,6 +129,7 @@ Expected<std::unique_ptr<MemoryBuffer>> lldLinkToBinary(
   }
   if (fwrite(linkerScriptStr.c_str(), 1, linkerScriptStr.length(), fl) !=
       linkerScriptStr.length()) {
+    (void)fclose(fl);
     return createStringError(inconvertibleErrorCode(),
                              "unable to write to temporary linker script file");
   }
@@ -145,6 +147,18 @@ Expected<std::unique_ptr<MemoryBuffer>> lldLinkToBinary(
     compiler::utils::appendMLLVMOptions(split_llvm_options, args);
   }
 #endif  // NDEBUG
+
+#if LLVM_VERSION_LESS(20, 0)
+  // LLVM's register allocator has issues with early-clobbers if subreg liveness
+  // is enabled. The InitUndef pass documents this and attempts to work around
+  // it, but prior to <https://github.com/llvm/llvm-project/pull/90967>, the
+  // InitUndef pass would not work reliably when multiple functions were
+  // processed, because internal state from one function would be kept around
+  // when processing the next. As we have no good way of fixing the InitUndef
+  // pass in older LLVM versions, disable subreg liveness instead.
+  args.push_back("-mllvm");
+  args.push_back("-enable-subreg-liveness=false");
+#endif
 
   for (const auto &arg : additionalLinkArgs) {
     args.push_back(arg);

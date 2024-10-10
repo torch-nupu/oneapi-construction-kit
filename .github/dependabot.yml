@@ -1,0 +1,19 @@
+
+version: 2
+updates:
+# Enable version updates for Github Actions
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/.github/actions/build_portBLAS_action"
+      - "/.github/actions/build_portDNN_action"
+      - "/.github/actions/build_vgg_resnet_action"
+      - "/.github/actions/setup_ubuntu_build"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    reviewers:
+      - "codeplaysoftware/security-managers"

@@ -612,12 +612,12 @@ class FetchTest : public C11AtomicTestBase {
 };
 
 template <typename T>
-T zeroReference(size_t, const std::vector<T> &) {
+static T zeroReference(size_t, const std::vector<T> &) {
   return T{0};
 }
 
 template <typename T>
-T firstEltReference(size_t, const std::vector<T> &input) {
+static T firstEltReference(size_t, const std::vector<T> &input) {
   return input[0];
 }
 
@@ -2121,10 +2121,20 @@ class Weak : public C11AtomicTestBase {
   template <typename T>
   void doTest(bool local = false, bool local_local = false) {
     // Generate the random input.
+    // We need unique values in order to reliably determine whether a compare
+    // and exchange failed spuriously.
     std::vector<T> input_data(kts::N, T{});
-    ucl::Environment::instance->GetInputGenerator().GenerateData(input_data);
     std::vector<T> desired_data(kts::N, T{});
-    ucl::Environment::instance->GetInputGenerator().GenerateData(desired_data);
+
+    {
+      std::vector<T> all_values(input_data.size() + desired_data.size(), T{});
+      ucl::Environment::instance->GetInputGenerator().GenerateUniqueIntData<T>(
+          all_values);
+      input_data.assign(std::begin(all_values),
+                        std::next(std::begin(all_values), kts::N));
+      desired_data.assign(std::next(std::begin(all_values), kts::N),
+                          std::end(all_values));
+    }
 
     // Set up references.
     kts::Reference1D<T> random_reference = [input_data](size_t index) {
@@ -2365,7 +2375,7 @@ class WeakGlobalSingle : public C11AtomicTestBase {
       return desired_values[index];
     };
     kts::Reference1D<cl_int> bool_output_reference =
-        [success_index, weak_exchange_failed](size_t index) {
+        [success_index, &weak_exchange_failed](size_t index) {
           return index == success_index && !weak_exchange_failed;
         };
 

@@ -1,4 +1,5 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/codeplaysoftware/oneapi-construction-kit/badge)](https://scorecard.dev/viewer/?uri=github.com/codeplaysoftware/oneapi-construction-kit)
 
 # oneAPI Construction Kit
 
@@ -40,10 +41,10 @@ To install the dependencies on Ubuntu, open the terminal and run:
 To install the recommended packages, run:
 ```sh
    $ sudo apt install -y ninja-build doxygen python3-pip
-   $ sudo pip3 install lit virtualenv cmakelint clang-format==17.0.6
+   $ sudo pip3 install lit virtualenv cmakelint clang-format==19.1.0
 ```
 
-### Compiling oneAPI Construction Kit 
+### Compiling oneAPI Construction Kit
 To compile the oneAPI Construction Kit, LLVM needs to be installed and linked against. The build process requires the use of tools from LLVM when the runtime compiler is enabled. The user can either follow the [LLVM guide](doc/developer-guide.md#compiling-llvm) to build a suitable install or follow the [without LLVM guide](doc/developer-guide.md#compiling-the-oneapi-construction-kit-without-llvm) to compile the oneAPI Construction Kit with the runtime compiler disabled.
 
 Examples are provided to get started, but for more control over the compilation process, the user can consult the list of CMake options.
