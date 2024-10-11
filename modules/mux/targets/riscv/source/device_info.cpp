@@ -204,7 +204,7 @@ static mux_result_t GetDeviceInfos(uint32_t device_types,
     }
     // advance to next device info
     ++num_infos_out;
-    if (num_infos_out >= device_infos_length) {
+    if (device_infos_length != 0 && num_infos_out >= device_infos_length) {
       // no more space so terminate
       break;
     }
