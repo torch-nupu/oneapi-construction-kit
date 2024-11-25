@@ -152,6 +152,7 @@ ca_option(CA_USE_SPLIT_DWARF BOOL
 
 # options for private usage
 ca_option(CA_BUILD_SPIRV_TOOLS BOOL "build spirv-tools from src" OFF)
+ca_option(CA_TRACY_ENABLE BOOL "Enable tracy profiler" OFF)
 
 if(CMAKE_MAKE_PROGRAM MATCHES ninja)
   ca_option(CA_PARALLEL_LINK_JOBS STRING

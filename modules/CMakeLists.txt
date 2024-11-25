@@ -60,6 +60,7 @@ if(NOT (OCK_IN_LLVM_TREE AND "llvm-spirv" IN_LIST LLVM_ENABLE_PROJECTS))
       GIT_SHALLOW 1
     )
     set(SPIRV_SKIP_TESTS ON)
+    set(SPIRV_WERROR OFF)
     FetchContent_MakeAvailable(SPIRV-Tools)
   endif()
 endif()

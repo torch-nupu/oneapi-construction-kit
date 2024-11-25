@@ -14,6 +14,31 @@
 #
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# TODO: support `TRACY_ON_DEMAND` ?
+if(CA_TRACY_ENABLE)
+
+FetchContent_Declare(
+  tracy
+  GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+  GIT_TAG 759b4c3bfe207ab382c01080f0417aca5af4411a
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE
+)
+set(TRACY_STATIC ON)
+FetchContent_MakeAvailable(tracy)
+set_property(TARGET TracyClient PROPERTY POSITION_INDEPENDENT_CODE ON)
+
+add_ca_library(tracer STATIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/tracer/tracer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/tracer.cpp)
+
+target_include_directories(tracer PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+target_compile_definitions(tracer PUBLIC "-DTRACY_ENABLE")
+target_link_libraries(tracer PUBLIC Tracy::TracyClient)
+target_link_libraries(tracer PRIVATE utils)
+
+else(CA_TRACY_ENABLE)
+
 # If the online coverage is enabled we add the modules so that the XML file
 # can be generated automatically.
 if(${CA_ENABLE_COVERAGE} AND ${CA_RUNTIME_COMPILER_ENABLED})
@@ -40,6 +65,8 @@ target_compile_definitions(tracer PUBLIC
   $<$<BOOL:${CA_TRACE_IMPLEMENTATION}>:CA_TRACE_IMPLEMENTATION=1>)
 
 target_link_libraries(tracer PRIVATE utils)
+
+endif(CA_TRACY_ENABLE)
 
 # Append to the list of module libraries, the cache MUST be updated.
 list(APPEND MODULES_LIBRARIES tracer)

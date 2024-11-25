@@ -21,7 +21,13 @@
 #ifndef TRACER_H_INCLUDED
 #define TRACER_H_INCLUDED
 
+#if !defined(TRACY_ENABLE)
 #include <cstdint>
+#else
+#include <tracy/Tracy.hpp>
+
+#include <memory>
+#endif
 
 namespace tracer {
 /// @addtogroup tracer
@@ -91,6 +97,8 @@ TRACER_GUARD_CATEGORY(Impl, CA_TRACE_IMPLEMENTATION)
 
 #undef TRACER_GUARD_CATEGORY
 
+#if !defined(TRACY_ENABLE)
+
 /// @brief A scoped timer. Construct the TracerGuard object with one of the
 /// category types. eg: tracer::TraceGuard<OpenCL>("function");
 template <typename Category>
@@ -113,6 +121,32 @@ struct TraceGuard {
   const char *trace_name;
   uint64_t start_time;
 };
+
+#else  // !defined(TRACY_ENABLE)
+
+template <typename Category>
+struct TraceGuard {
+  TraceGuard(const char *trace_name) {
+    // TODO: reduce overhead
+    // TODO: record parrent __FUNCTION__ and __FILE__ ?
+    // TODO: change var name ?
+    // TODO: change color by `Category`
+    static tracy::SourceLocationData sourcelocationdata{
+        trace_name, __FUNCTION__, __FILE__, __LINE__, 0};
+    scoped_zone =
+        std::make_unique<tracy::ScopedZone>(&sourcelocationdata,
+                                            /*depth*/ 4, /*is_active*/ true);
+    scoped_zone->NameFmt(trace_name);
+    scoped_zone->TextFmt(getCategoryName<Category>());
+  };
+
+  ~TraceGuard() = default;
+
+ private:
+  std::unique_ptr<tracy::ScopedZone> scoped_zone;
+};
+
+#endif  // !defined(TRACY_ENABLE)
 
 /// @}
 }  // namespace tracer
