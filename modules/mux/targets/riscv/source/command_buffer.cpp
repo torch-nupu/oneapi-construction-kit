@@ -18,10 +18,12 @@
 
 #include "mux/mux.h"
 #include "riscv/fence.h"
+#include "tracer/tracer.h"
 #include "utils/system.h"
 
 namespace riscv {
 void command_read_buffer_s::operator()(riscv::device_s *device, bool &error) {
+  ZoneScopedN("command_read_buffer_s");
   if (!device->hal_device->mem_read(host_pointer, buffer->targetPtr + offset,
                                     size)) {
     error = true;
@@ -30,6 +32,7 @@ void command_read_buffer_s::operator()(riscv::device_s *device, bool &error) {
 }
 
 void command_write_buffer_s::operator()(riscv::device_s *device, bool &error) {
+  ZoneScopedN("command_write_buffer_s");
   if (!device->hal_device->mem_write(buffer->targetPtr + offset, host_pointer,
                                      size)) {
     error = true;
@@ -38,6 +41,7 @@ void command_write_buffer_s::operator()(riscv::device_s *device, bool &error) {
 }
 
 void command_copy_buffer_s::operator()(riscv::device_s *device, bool &error) {
+  ZoneScopedN("command_copy_buffer_s");
   if (!device->hal_device->mem_copy(dst_buffer->targetPtr + dst_offset,
                                     src_buffer->targetPtr + src_offset, size)) {
     error = true;
@@ -46,6 +50,7 @@ void command_copy_buffer_s::operator()(riscv::device_s *device, bool &error) {
 }
 
 void command_fill_buffer_s::operator()(riscv::device_s *device, bool &error) {
+  ZoneScopedN("command_fill_buffer_s");
   if (!device->hal_device->mem_fill(buffer->targetPtr + offset, pattern,
                                     pattern_size, size)) {
     error = true;
@@ -54,6 +59,7 @@ void command_fill_buffer_s::operator()(riscv::device_s *device, bool &error) {
 }
 
 void command_ndrange_s::operator()(riscv::queue_s *queue, bool &error) {
+  ZoneScopedN("command_ndrange_s");
   auto device = static_cast<riscv::device_s *>(queue->device);
   hal::hal_device_t *hal_device = device->hal_device;
   assert(kernel && hal_device);
@@ -101,11 +107,13 @@ void command_ndrange_s::operator()(riscv::queue_s *queue, bool &error) {
 
 void command_user_callback_s::operator()(
     riscv::queue_s *queue, riscv::command_buffer_s *command_buffer) {
+  ZoneScopedN("command_user_callback_s");
   user_function(queue, command_buffer, user_data);
 }
 
 [[nodiscard]] mux_query_duration_result_t command_begin_query_s::operator()(
     riscv::device_s *device, mux_query_duration_result_t duration_query) {
+  ZoneScopedN("command_begin_query_s");
   if (pool->type == mux_query_type_duration) {
     return static_cast<riscv::query_pool_s *>(pool)->getDurationQueryAt(index);
   } else {
@@ -119,6 +127,7 @@ void command_user_callback_s::operator()(
 
 [[nodiscard]] mux_query_duration_result_t command_end_query_s::operator()(
     riscv::device_s *device, mux_query_duration_result_t duration_query) {
+  ZoneScopedN("command_end_query_s");
   if (pool->type == mux_query_type_duration) {
     auto end_duration_query =
         static_cast<riscv::query_pool_s *>(pool)->getDurationQueryAt(index);
@@ -134,6 +143,7 @@ void command_user_callback_s::operator()(
 }
 
 void command_reset_query_pool_s::operator()() {
+  ZoneScopedN("command_reset_query_pool_s");
   if (pool->type == mux_query_type_duration) {
     auto query_pool = static_cast<riscv::query_pool_s *>(pool);
     query_pool->reset(sizeof(mux_query_duration_result_s) * index,
@@ -163,6 +173,7 @@ command_buffer_s::~command_buffer_s() {
 }
 
 mux_result_t command_buffer_s::execute(riscv::queue_s *queue) {
+  ZoneScopedN("command_buffer_s::execute");
   riscv::device_s *riscv_device = static_cast<riscv::device_s *>(device);
   mux_query_duration_result_t duration_query = nullptr;
 

@@ -23,6 +23,8 @@
 
 #if !defined(TRACY_ENABLE)
 #include <cstdint>
+
+#include "tracy_def.h"
 #else
 #include <tracy/Tracy.hpp>
 
