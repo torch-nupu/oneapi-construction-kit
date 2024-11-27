@@ -2394,7 +2394,7 @@ struct mux_device_info_s {
   size_t num_sub_group_sizes;
   /// @brief List of sub-group sizes supported by the device, sized by
   /// num_sub_group_sizes.
-  size_t *sub_group_sizes;
+  const size_t *sub_group_sizes;
 };
 
 /// @brief Mux's device container.
