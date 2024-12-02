@@ -26,9 +26,9 @@ jobs:
 
        # installs tools, ninja, installs llvm and sets up sccache
       - name: Setup ubuntu
-        uses:  ./.github/actions/setup_ubuntu_build
+        uses:  ./.github/actions/setup_build
         with:
-          llvm_version: 17
+          llvm_version: 18
           llvm_build_type: Release
 
       - name: Setup python
@@ -101,7 +101,7 @@ jobs:
           fi
 
       - name: Create OCK pre-release
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+        uses: softprops/action-gh-release@e7a8f85e1c67a31e6ed99a94b41bd0b71bbee6b8 # v2.0.9
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         with:

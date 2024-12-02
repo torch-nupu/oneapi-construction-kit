@@ -31,7 +31,6 @@
 #include <llvm/IR/Module.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <multi_llvm/llvm_version.h>
-#include <multi_llvm/multi_llvm.h>
 #include <multi_llvm/vector_type_helper.h>
 
 #include <cassert>
@@ -154,9 +153,11 @@ void replaceConstantExpressionWithInstruction(llvm::Constant *const constant) {
   // passes)
   constant->removeDeadConstantUsers();
 
-  // Only handle constants which are ConstantExpr or ConstantVector
+  // Only handle constants which are ConstantExpr, ConstantVector or
+  // ConstantArray
   assert((llvm::isa<llvm::ConstantExpr>(constant) ||
-          llvm::isa<llvm::ConstantVector>(constant)) &&
+          llvm::isa<llvm::ConstantVector>(constant) ||
+          llvm::isa<llvm::ConstantArray>(constant)) &&
          "Unsupported constant type in IR");
 
   // For each user of a constant we will check to see if they in turn are
@@ -230,6 +231,22 @@ void replaceConstantExpressionWithInstruction(llvm::Constant *const constant) {
           llvm::FixedVectorType::get(i32Ty, numEls));
       newInst = new llvm::ShuffleVectorInst(insert, undef, zeros);
       newInst->insertAfter(insert);
+    } else if (llvm::ConstantArray *constantArr =
+                   llvm::dyn_cast<llvm::ConstantArray>(constant)) {
+      auto numEls = constantArr->getNumOperands();
+      llvm::Value *undef = llvm::UndefValue::get(constantArr->getType());
+      llvm::Instruction *insertedIns = nullptr;
+      for (unsigned int i = 0; i < numEls; i++) {
+        auto *insertNext = llvm::InsertValueInst::Create(
+            insertedIns ? insertedIns : undef, constantArr->getOperand(i), {i});
+        if (insertedIns) {
+          insertNext->insertAfter(insertedIns);
+        } else {
+          insertNext->insertBefore(useFunc->getEntryBlock().getFirstNonPHI());
+        }
+        insertedIns = insertNext;
+      }
+      newInst = insertedIns;
     }
 
     // replace the use of the constant with the instruction
@@ -440,7 +457,8 @@ void remapClonedCallsites(llvm::Function &oldFunc, llvm::Function &newFunc,
       }
 
       // create our new call instruction to replace the old one
-      auto newCi = llvm::CallInst::Create(&newFunc, args, name, ci);
+      auto newCi = llvm::CallInst::Create(&newFunc, args, name);
+      newCi->insertBefore(ci->getIterator());
 
       // use the debug location from the old call (if any)
       newCi->setDebugLoc(ci->getDebugLoc());
