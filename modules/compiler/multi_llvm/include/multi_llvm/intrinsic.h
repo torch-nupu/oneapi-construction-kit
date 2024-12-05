@@ -13,29 +13,23 @@
 // under the License.
 //
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-#ifndef MULTI_LLVM_BASICBLOCK_HELPER_H_INCLUDED
-#define MULTI_LLVM_BASICBLOCK_HELPER_H_INCLUDED
 
-#include <llvm/IR/BasicBlock.h>
+#ifndef MULTI_LLVM_MULTI_INTRINSIC_H_INCLUDED
+#define MULTI_LLVM_MULTI_INTRINSIC_H_INCLUDED
+
 #include <multi_llvm/llvm_version.h>
 
 namespace multi_llvm {
-inline void insertBefore(llvm::Instruction *const I,
-                         const llvm::BasicBlock::iterator InsertPos) {
-#if LLVM_VERSION_GREATER_EQUAL(18, 0)
-  I->insertBefore(InsertPos);
+static inline auto GetOrInsertIntrinsicDeclaration(
+    llvm::Module *M, llvm::Intrinsic::ID id,
+    llvm::ArrayRef<llvm::Type *> Tys = {}) {
+#if LLVM_VERSION_GREATER_EQUAL(20, 0)
+  return llvm::Intrinsic::getOrInsertDeclaration(M, id, Tys);
 #else
-  I->insertBefore(&*InsertPos);
+  return llvm::Intrinsic::getDeclaration(M, id, Tys);
 #endif
 }
 
-inline llvm::BasicBlock::iterator getFirstNonPHIIt(llvm::BasicBlock *const BB) {
-#if LLVM_VERSION_GREATER_EQUAL(18, 0)
-  return BB->getFirstNonPHIIt();
-#else
-  return BB->getFirstNonPHI()->getIterator();
-#endif
-}
 }  // namespace multi_llvm
 
-#endif  // MULTI_LLVM_BASICBLOCK_HELPER_H_INCLUDED
+#endif  // MULTI_LLVM_MULTI_INTRINSIC_H_INCLUDED

@@ -921,7 +921,7 @@ Value *Packetizer::Impl::reduceBranchCond(Value *cond, Instruction *terminator,
   // value.
   Value *&f = conds.front();
 
-  return createMaybeVPTargetReduction(B, TTI, f, kind, VL);
+  return createMaybeVPReduction(B, f, kind, VL);
 }
 
 Packetizer::Result Packetizer::Impl::assign(Value *Scalar, Value *Vectorized) {
@@ -976,7 +976,7 @@ Packetizer::Result Packetizer::Impl::packetize(Value *V) {
       if (newCond->getType()->isVectorTy()) {
         IRBuilder<> B(Branch);
         const RecurKind kind = RecurKind::Or;
-        newCond = createMaybeVPTargetReduction(B, TTI, newCond, kind, VL);
+        newCond = createMaybeVPReduction(B, newCond, kind, VL);
       }
 
       Branch->setCondition(newCond);
@@ -1269,8 +1269,7 @@ Value *Packetizer::Impl::packetizeGroupReduction(Instruction *I) {
   }
 
   // Reduce to a scalar.
-  Value *v = createMaybeVPTargetReduction(B, TTI, opPackets.front(),
-                                          Info->Recurrence, VL);
+  Value *v = createMaybeVPReduction(B, opPackets.front(), Info->Recurrence, VL);
 
   // We leave the original reduction function and divert the vectorized
   // reduction through it, giving us a reduction over the full apparent
@@ -1943,8 +1942,7 @@ Value *Packetizer::Impl::packetizeMaskVarying(Instruction *I) {
       }
     }();
 
-    Value *anyOfMask =
-        createMaybeVPTargetReduction(B, TTI, vecMask, RecurKind::Or, VL);
+    Value *anyOfMask = createMaybeVPReduction(B, vecMask, RecurKind::Or, VL);
     anyOfMask->setName("any_of_mask");
 
     if (isVector) {
@@ -2389,8 +2387,7 @@ ValuePacket Packetizer::Impl::packetizeGroupScan(
   // Thus we essentially keep the original group scan, but change it to be an
   // exclusive one.
   auto *Reduction = Ops.front();
-  Reduction =
-      createMaybeVPTargetReduction(B, TTI, Reduction, Scan.Recurrence, VL);
+  Reduction = createMaybeVPReduction(B, Reduction, Scan.Recurrence, VL);
 
   // Now we defer to an *exclusive* scan over the group.
   auto ExclScan = Scan;
@@ -2642,13 +2639,17 @@ ValuePacket Packetizer::Impl::packetizeMemOp(MemOp &op) {
     // Gather load or scatter store.
     for (unsigned i = 0; i != packetWidth; ++i) {
       if (op.isLoad()) {
-        results.push_back(createGather(Ctx, packetVecTy, ptrPacket[i],
-                                       maskPacket[i], EVL, op.getAlignment(),
-                                       name, op.getInstr()));
+        auto *gather =
+            createGather(Ctx, packetVecTy, ptrPacket[i], maskPacket[i], EVL,
+                         op.getAlignment(), name);
+        gather->insertBefore(op.getInstr()->getIterator());
+        results.push_back(gather);
       } else {
-        results.push_back(createScatter(Ctx, dataPacket[i], ptrPacket[i],
-                                        maskPacket[i], EVL, op.getAlignment(),
-                                        name, op.getInstr()));
+        auto *scatter =
+            createScatter(Ctx, dataPacket[i], ptrPacket[i], maskPacket[i], EVL,
+                          op.getAlignment(), name);
+        scatter->insertBefore(op.getInstr()->getIterator());
+        results.push_back(scatter);
       }
     }
   } else if (!constantStrideVal || constantStride != 1) {
@@ -2707,13 +2708,17 @@ ValuePacket Packetizer::Impl::packetizeMemOp(MemOp &op) {
                                   Twine(name, ".incr"));
       }
       if (op.isLoad()) {
-        results.push_back(
+        auto *newLoad =
             createInterleavedLoad(Ctx, packetVecTy, ptr, stride, maskPacket[i],
-                                  EVL, op.getAlignment(), name, op.getInstr()));
+                                  EVL, op.getAlignment(), name);
+        newLoad->insertBefore(op.getInstr()->getIterator());
+        results.push_back(newLoad);
       } else {
-        results.push_back(createInterleavedStore(
-            Ctx, dataPacket[i], ptr, stride, maskPacket[i], EVL,
-            op.getAlignment(), name, op.getInstr()));
+        auto *newStore =
+            createInterleavedStore(Ctx, dataPacket[i], ptr, stride,
+                                   maskPacket[i], EVL, op.getAlignment(), name);
+        newStore->insertBefore(op.getInstr()->getIterator());
+        results.push_back(newStore);
       }
     }
   } else {
@@ -2776,13 +2781,17 @@ ValuePacket Packetizer::Impl::packetizeMemOp(MemOp &op) {
                                     Twine(name, ".incr"));
         }
         if (op.isLoad()) {
-          results.push_back(createMaskedLoad(
-              Ctx, getWideType(dataTy, factor), ptr, maskPacket[i], EVL,
-              op.getAlignment(), name, op.getInstr()));
+          auto *newLoad =
+              createMaskedLoad(Ctx, getWideType(dataTy, factor), ptr,
+                               maskPacket[i], EVL, op.getAlignment(), name);
+          newLoad->insertBefore(op.getInstr()->getIterator());
+          results.push_back(newLoad);
         } else {
-          results.push_back(
+          auto *newStore =
               createMaskedStore(Ctx, dataPacket[i], ptr, maskPacket[i], EVL,
-                                op.getAlignment(), name, op.getInstr()));
+                                op.getAlignment(), name);
+          newStore->insertBefore(op.getInstr()->getIterator());
+          results.push_back(newStore);
         }
       }
     } else {
@@ -3370,13 +3379,14 @@ Value *Packetizer::Impl::vectorizeCall(CallInst *CI) {
     LoadInst *PointerRetResult =
         B.CreateLoad(PointerRetAlloca->getAllocatedType(), PointerRetAlloca);
     Value *Stride = getSizeInt(B, PointerRetStride);
-    auto *Store = createInterleavedStore(
-        Ctx, PointerRetResult, PointerRetAddr, Stride,
-        /*Mask*/ nullptr, /*EVL*/ nullptr, PointerRetAlloca->getAlign().value(),
-        "", &*B.GetInsertPoint());
+    auto *Store =
+        createInterleavedStore(Ctx, PointerRetResult, PointerRetAddr, Stride,
+                               /*Mask*/ nullptr, /*EVL*/ nullptr,
+                               PointerRetAlloca->getAlign().value());
     if (!Store) {
       return nullptr;
     }
+    Store->insertBefore(B.GetInsertPoint());
   }
   return NewCI;
 }

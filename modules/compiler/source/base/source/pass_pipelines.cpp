@@ -118,8 +118,7 @@ void addLLVMDefaultPerModulePipeline(ModulePassManager &PM, PassBuilder &PB,
   if (!options.opt_disable) {
     PM.addPass(PB.buildPerModuleDefaultPipeline(OptimizationLevel::O3));
   } else {
-    PM.addPass(PB.buildO0DefaultPipeline(OptimizationLevel::O0,
-                                         /*LTOPreLink*/ false));
+    PM.addPass(PB.buildO0DefaultPipeline(OptimizationLevel::O0));
     // LLVM's new inliners do less than the legacy ones, so run a round of
     // global optimization to remove any dead functions.
     // FIXME: This isn't just optimization: we have internal functions without
@@ -134,8 +133,8 @@ Result emitCodeGenFile(llvm::Module &M, TargetMachine *TM,
                        raw_pwrite_stream &ostream, bool create_assembly) {
   legacy::PassManager PM;
   const CodeGenFileType type = !create_assembly
-                                   ? multi_llvm::CodeGenFileType::ObjectFile
-                                   : multi_llvm::CodeGenFileType::AssemblyFile;
+                                   ? llvm::CodeGenFileType::ObjectFile
+                                   : llvm::CodeGenFileType::AssemblyFile;
   if (TM->addPassesToEmitFile(PM, ostream, /*DwoOut*/ nullptr, type,
                               /*DisableVerify*/ false)) {
     return compiler::Result::FAILURE;
