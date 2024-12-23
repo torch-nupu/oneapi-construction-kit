@@ -2395,6 +2395,12 @@ struct mux_device_info_s {
   /// @brief List of sub-group sizes supported by the device, sized by
   /// num_sub_group_sizes.
   const size_t *sub_group_sizes;
+  /// @brief true if supports unified shared memory
+  bool supports_usm;
+  /// @brief Base address for host USM allocations
+  uint64_t usm_host_base;
+  /// @brief Size of host USM memory region
+  uint64_t usm_host_size;
 };
 
 /// @brief Mux's device container.

@@ -76,6 +76,7 @@ mux_result_t riscvCreateMemoryFromHost(mux_device_t device, size_t size,
   if (!memory) {
     return memory.error();
   }
+  *out_memory = memory.value();
   return mux_success;
 }
 

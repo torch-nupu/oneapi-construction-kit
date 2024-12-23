@@ -67,13 +67,19 @@ void device_info_s::update_from_hal_info(const hal::hal_device_info_t *info) {
   this->max_work_group_size_z = this->max_concurrent_work_items;
   this->query_counter_support = (info->num_counters > 0);
 
+  // update usm info
+  this->supports_usm = info->supports_usm;
+  this->usm_host_base = info->usm_host_base;
+  this->usm_host_size = info->usm_host_size;
+
   // device info has been updated from the hal and is now valid
   valid = true;
 }
 
 device_info_s::device_info_s()
     : hal_device_info(nullptr), hal_device_index(0), valid(false) {
-  this->allocation_capabilities = mux_allocation_capabilities_alloc_device;
+  this->allocation_capabilities = mux_allocation_capabilities_alloc_device |
+                                   mux_allocation_capabilities_cached_host;
 
   // Override this default from hal updates
   this->address_capabilities = mux_address_capabilities_bits64;
@@ -162,6 +168,11 @@ device_info_s::device_info_s()
   };
   this->sub_group_sizes = sg_sizes.data();
   this->num_sub_group_sizes = sg_sizes.size();
+
+  // default usm info
+  this->supports_usm = false;
+  this->usm_host_base = 0;
+  this->usm_host_size = 0;
 }
 
 static mux_result_t GetDeviceInfos(uint32_t device_types,

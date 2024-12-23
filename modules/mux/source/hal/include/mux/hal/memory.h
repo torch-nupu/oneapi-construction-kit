@@ -82,10 +82,12 @@ struct memory : mux_memory_s {
     static_assert(std::is_base_of_v<mux::hal::memory, Memory>,
                   "template type Memory must derive from mux::hal::memory");
     (void)device;
-    (void)size;
-    (void)pointer;
-    (void)allocator;
-    return cargo::make_unexpected(mux_error_feature_unsupported);
+
+    auto memory = allocator.create<Memory>(size, 0, ::hal::hal_nullptr, pointer);
+    if (!memory) {
+      return cargo::make_unexpected(mux_error_out_of_memory);
+    }
+    return memory;
   }
 
   /// @see muxFreeMemory

@@ -99,6 +99,11 @@ struct hal_device_info_riscv_t : public hal::hal_device_info_t {
     info.should_vectorize = extensions & rv_extension_V;
     info.supports_doubles = extensions & rv_extension_D;
     info.supports_fp16 = extensions & rv_extension_Zfh;
+    
+    // update usm info
+    info.supports_usm = supports_usm;
+    info.usm_host_base = usm_host_base;
+    info.usm_host_size = usm_host_size;
   }
 
   // vlen - default to 0 (which means the v extension is not enabled or the

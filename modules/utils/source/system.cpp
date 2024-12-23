@@ -46,7 +46,7 @@ uint64_t timestampNanoSeconds() {
                 static_cast<uint64_t>(ts.tv_nsec);
   }
 #elif defined(CA_PLATFORM_MAC)
-  kern_result_t res;
+  kern_return_t res;
   clock_serv_t cclock;
   mach_timespec_t mts;
   res = host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);

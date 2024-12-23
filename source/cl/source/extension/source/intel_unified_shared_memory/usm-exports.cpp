@@ -482,8 +482,33 @@ cl_int clSetKernelArgMemPointerINTEL(cl_kernel kernel, cl_uint arg_index,
   // The cl_intel_unified_shared_memory specification has an open question on
   // whether unknown pointers should be accepted. We accept them since the SYCL
   // specification and the SYCL CTS imply this must be treated as valid.
+
+  // convert host usm address to device address
+  const void* device_addr = arg_value;
+  if (arg_value) {
+    auto device_info = kernel->device_kernel_map.begin()->first->mux_device->info;
+    if (device_info->supports_usm) {
+      cl_unified_shared_memory_type_intel mem_type;
+      cl_int query_err = clGetMemAllocInfoINTEL(
+          kernel->program->context,
+          arg_value,
+          CL_MEM_ALLOC_TYPE_INTEL,
+          sizeof(mem_type),
+          &mem_type,
+          NULL
+      );
+      
+      // if query failed, we treat it as host usm pointer
+      if (query_err != CL_SUCCESS || mem_type == CL_MEM_TYPE_HOST_INTEL) {
+        uint64_t arg_addr = reinterpret_cast<uint64_t>(arg_value);
+        uint64_t dev_addr = arg_addr + device_info->usm_host_base;
+        device_addr = reinterpret_cast<const void*>(dev_addr);
+      }
+    }
+  }
+
   kernel->saved_args[arg_index] = _cl_kernel::argument(
-      *arg_type, static_cast<void *>(&arg_value), sizeof(void *));
+      *arg_type, &device_addr, sizeof(void*));
 
   return CL_SUCCESS;
 }

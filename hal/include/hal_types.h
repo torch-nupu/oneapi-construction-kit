@@ -171,6 +171,15 @@ struct hal_device_info_t {
   /// @brief true if little endian.
   bool is_little_endian;
 
+  /// @brief true if supports unified shared memory
+  bool supports_usm = false;
+
+  /// @brief Base address for host USM allocations
+  uint64_t usm_host_base = 0;
+
+  /// @brief Size of host USM memory region
+  uint64_t usm_host_size = 0;
+
   /// @brief number of supported performance counters.
   uint32_t num_counters = 0;
 
