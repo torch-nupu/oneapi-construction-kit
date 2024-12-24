@@ -1,9 +1,14 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-1.4-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/uxlfoundation/oneapi-construction-kit/badge)](https://scorecard.dev/viewer/?uri=github.com/uxlfoundation/oneapi-construction-kit)
+[![UXL Foundation Logo](https://github.com/uxlfoundation/artwork/blob/main/foundation/uxl-foundation-logo-horizontal-color.png)][UXL Foundation]
 
 # oneAPI Construction Kit
 
 The oneAPI Construction Kit is a framework to provide implementations of open standards, such as OpenCL and Vulkan, for a wide range of devices. The oneAPI Construction Kit can be used to build with the oneAPI Toolkit. The oneAPI Toolkit includes support for various open standards, such as OpenMP, SYCL, and DPC++. DPC++ is based on the SYCL programming model, which allows to write single-source C++ code that can target both CPUs and GPUs. To get more information on oneAPI, please visit https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html.
+
+The oneAPI Construction Kit is part of the [UXL Foundation].
+
+[UXL Foundation]: http://www.uxlfoundation.org
 
 >**_Note:_**
  It is not intended to be used as a standalone OpenCL or Vulkan implementation. It does not support the oneAPI Level Zero API.
@@ -362,3 +367,37 @@ refsi_hal_device::mem_free(address=0x9ff0ff00)
 refsi_hal_device::mem_free(address=0x9ff0ff80)
 The results are correct!
 ```
+
+# Support
+
+Questions can be submitted on [GitHub Discussions Q&A] or on [GitHub Issues].
+
+Before submitting a question, please make sure to read through the relevant
+[documentation] and any existing discussions or issues.
+
+If you find that your question has been previously asked but you are in need of
+further clarification, feel free to write your question on the existing
+discussion or issue.
+
+If you would like to open a new question, we ask that you follow these steps:
+
+* [Open a new question](https://github.com/uxlfoundation/oneapi-construction-kit/discussions/new?category=q-a)
+* Alternatively, [open a new issue](https://github.com/codeplaysoftware/oneapi-construction-kit/issues/new/choose).
+  * Select the **Question** issue template and fill in the requested details.
+* Provide as much context as you can about the problem or question you have.
+* Provide project version and any relevant system details (e.g. operating
+  system).
+
+Once your question has been opened, we will take a look and try to help you as
+soon as possible.
+
+[Documentation]: https://developer.codeplay.com/products/oneapi/construction-kit/guides
+[GitHub Discussions Q&A]: https://github.com/uxlfoundation/oneapi-construction-kit/discussions/categories/q-a
+[GitHub Issues]: https://github.com/uxlfoundation/oneapi-construction-kit/issues
+
+# Governance
+The oneAPI Construction Kit project is governed by the [UXL Foundation] and you can get involved in
+this project in the following ways:
+* Contribute to the oneAPI Construction Kit project. Read [CONTRIBUTING](./CONTRIBUTING.md) for more information.
+* Join the [Open Source and Specification Working Group](https://github.com/uxlfoundation/foundation/tree/main?tab=readme-ov-file#working-groups) meetings.
+* Join the mailing lists for the [UXL Foundation](https://lists.uxlfoundation.org/g/main/subgroups) to receive meetings schedule and latest updates.
