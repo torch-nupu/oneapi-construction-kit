@@ -151,8 +151,14 @@ ca_option(CA_USE_SPLIT_DWARF BOOL
   ON)
 
 # options for private usage
+ca_option(CA_LLVM_IS_DPCPP BOOL "building with llvm-dpcpp" OFF)
 ca_option(CA_BUILD_SPIRV_TOOLS BOOL "build spirv-tools from src" OFF)
+ca_option(CA_BUILD_LLVM_SPIRV BOOL "build llvm-spirv" ON)
 ca_option(CA_TRACY_ENABLE BOOL "Enable tracy profiler" OFF)
+
+if(CA_LLVM_IS_DPCPP AND CA_BUILD_LLVM_SPIRV)
+  message(FATAL_ERROR "`CA_LLVM_IS_DPCPP` cannot works with `CA_BUILD_LLVM_SPIRV`")
+endif()
 
 if(CMAKE_MAKE_PROGRAM MATCHES ninja)
   ca_option(CA_PARALLEL_LINK_JOBS STRING

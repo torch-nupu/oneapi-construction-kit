@@ -93,6 +93,11 @@
 #include <mux/mux.hpp>
 #include <spirv-ll/module.h>
 
+#if defined(CA_BUILD_LLVM_SPIRV)
+#include <LLVMSPIRVLib.h>
+#include <LLVMSPIRVOpts.h>
+#endif
+
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
@@ -338,7 +343,15 @@ BaseModule::BaseModule(compiler::BaseTarget &target,
       context(context),
       state(ModuleState::NONE),
       num_errors(num_errors),
-      log(log) {}
+      log(log) {
+#if defined(CA_BUILD_LLVM_SPIRV)
+  // TODO: make it default to use `llvm-spirv`
+  const auto *env = std::getenv("CA_USE_LLVM_SPIRV");
+  if (env && std::strcmp(env, "1") == 0) {
+    using_llvm_spirv = true;
+  }
+#endif
+}
 
 BaseModule::~BaseModule() {}
 
@@ -806,7 +819,24 @@ cargo::expected<spirv::ModuleInfo, Result> BaseModule::compileSPIRV(
 
   spirv::ModuleInfo module_info;
 
-  {
+  if (using_llvm_spirv) {
+#if defined(CA_BUILD_LLVM_SPIRV)
+    std::string err;
+    // TODO: can memcopy be reduced ?
+    std::istringstream iss(
+        std::string(reinterpret_cast<const char *>(buffer.data()),
+                    buffer.size() * sizeof(uint32_t)),
+        std::ios_base::binary);
+
+    // TODO: use `SPIRV::TranslatorOpts` ?
+    llvm::readSpirv(target.getLLVMContext(), iss, (llvm::Module *&)llvm_module,
+                    err);
+    if (!llvm_module) {
+      log.append(err + "\n");
+      return cargo::make_unexpected(Result::COMPILE_PROGRAM_FAILURE);
+    }
+#endif
+  } else {
     spirv_ll::Context spvContext(&target.getLLVMContext());
 
     // Convert SPIR-V inputs to SPIRV-LL data structures.

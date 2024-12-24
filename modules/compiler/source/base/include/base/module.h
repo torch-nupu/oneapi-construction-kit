@@ -527,6 +527,9 @@ class BaseModule : public Module {
   // between creating kernels and scheduled kernels those are locked directly.
   std::mutex kernel_mutex;
   std::map<std::string, std::unique_ptr<Kernel>> kernel_map;
+
+  // use `llvm-spirv` instead of `spirv-ll`
+  bool using_llvm_spirv = false;
 };  // class Module
 
 /// @}

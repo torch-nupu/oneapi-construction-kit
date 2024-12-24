@@ -101,6 +101,8 @@ class BaseContext : public Context {
   compiler::utils::DebugLogging llvm_debug_passes =
       compiler::utils::DebugLogging::None;
 
+  // use `llvm-spirv` instead of `spirv-ll`
+  bool using_llvm_spirv = false;
 };  // class ContextImpl
 /// @}
 }  // namespace compiler

@@ -44,7 +44,7 @@ if(NOT (OCK_IN_LLVM_TREE AND "llvm-spirv" IN_LIST LLVM_ENABLE_PROJECTS))
   FetchContent_Declare(
     SPIRV-Headers
     GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Headers.git
-    GIT_TAG        1c6bb2743599e6eb6f37b2969acc0aef812e32e3
+    GIT_TAG        3f17b2af6784bfa2c5aa5dbb8e0e74a607dd8b3b
   )
   FetchContent_MakeAvailable(SPIRV-Headers)
 
@@ -63,6 +63,14 @@ if(NOT (OCK_IN_LLVM_TREE AND "llvm-spirv" IN_LIST LLVM_ENABLE_PROJECTS))
     set(SPIRV_WERROR OFF)
     FetchContent_MakeAvailable(SPIRV-Tools)
   endif()
+endif()
+
+if(CA_BUILD_LLVM_SPIRV)
+  # TODO: latest llvm-spirv requires llvm 20.x
+  set(LLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR "${spirv-headers_SOURCE_DIR}")
+  set(LLVM_SPIRV_BUILD_EXTERNAL ON)
+  set(LLVM_SPIRV_INCLUDE_TESTS OFF)
+  add_subdirectory(${CMAKE_SOURCE_DIR}/llvm-spirv ${CMAKE_CURRENT_BINARY_DIR}/llvm-spirv)
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/mux)

@@ -45,7 +45,7 @@ set(COMPILER_BASE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/include/base/software_division_pass.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/base/program_metadata.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/base/target.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/source/base_module_pass_machinery.cpp  
+  ${CMAKE_CURRENT_SOURCE_DIR}/source/base_module_pass_machinery.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source/context.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source/module.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source/bit_shift_fixup_pass.cpp
@@ -117,6 +117,18 @@ target_link_libraries(compiler-base PUBLIC
   $<$<BOOL:${WIN32}>:version>
   "${LLVM_LIBS}"
 )
+
+if(CA_BUILD_LLVM_SPIRV)
+  target_compile_definitions(compiler-base PUBLIC CA_BUILD_LLVM_SPIRV)
+  target_include_directories(compiler-base SYSTEM PRIVATE "${CMAKE_SOURCE_DIR}/llvm-spirv/include")
+  target_link_libraries(compiler-base PUBLIC LLVMSPIRVLib)
+endif()
+
+if(CA_LLVM_IS_DPCPP)
+  target_compile_definitions(compiler-base PUBLIC CA_BUILD_LLVM_SPIRV)
+  target_include_directories(compiler-base SYSTEM PRIVATE "${CA_LLVM_INSTALL_DIR}/include/LLVMSPIRVLib")
+  target_link_libraries(compiler-base PUBLIC LLVMSPIRVLib)
+endif()
 
 target_compile_definitions(compiler-base PRIVATE
   # Abacus builtins are only included as part of the .cpp files, so these

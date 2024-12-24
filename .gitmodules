@@ -1,0 +1,3 @@
+[submodule "llvm-spirv"]
+	path = llvm-spirv
+	url = git@github.com:nuway-ai/llvm-spirv.git

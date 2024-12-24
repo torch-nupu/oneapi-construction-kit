@@ -20,6 +20,11 @@
 #include <spirv-ll/context.h>
 #include <spirv-ll/module.h>
 
+#if defined(CA_BUILD_LLVM_SPIRV)
+#include <LLVMSPIRVLib.h>
+#include <LLVMSPIRVOpts.h>
+#endif
+
 #if !defined(NDEBUG) || defined(CA_ENABLE_LLVM_OPTIONS_IN_RELEASE)
 #include <compiler/utils/llvm_global_mutex.h>
 #include <llvm/Support/CommandLine.h>
@@ -55,6 +60,13 @@ BaseContext::BaseContext() {
     }
   });
 #endif
+#if defined(CA_BUILD_LLVM_SPIRV)
+  // TODO: make it default to use `llvm-spirv`
+  const auto *env = std::getenv("CA_USE_LLVM_SPIRV");
+  if (env && std::strcmp(env, "1") == 0) {
+    using_llvm_spirv = true;
+  }
+#endif
 }
 
 BaseContext::~BaseContext() {}
@@ -71,6 +83,35 @@ bool BaseContext::isValidSPIRV(cargo::array_view<const uint32_t> code) {
 
 cargo::expected<spirv::SpecializableConstantsMap, std::string>
 BaseContext::getSpecializableConstants(cargo::array_view<const uint32_t> code) {
+  if (using_llvm_spirv) {
+#if defined(CA_BUILD_LLVM_SPIRV)
+    std::istringstream iss(
+        std::string(reinterpret_cast<const char *>(code.data()),
+                    code.size() * sizeof(uint32_t)),
+        std::ios_base::binary);
+    std::vector<llvm::SpecConstInfoTy> SpecConstInfo;
+    if (!llvm::getSpecConstInfo(iss, SpecConstInfo)) {
+      return cargo::make_unexpected("failed in getSpecConstInfo()");
+    }
+
+    spirv::SpecializableConstantsMap constants_map;
+    for (const auto &entry : SpecConstInfo) {
+      auto &constant = constants_map[entry.ID];
+      if (entry.Type == "i1") {
+        constant.constant_type = spirv::SpecializationType::BOOL;
+      } else if (entry.Type == "i32") {
+        constant.constant_type = spirv::SpecializationType::INT;
+      } else if (entry.Type == "f32") {
+        constant.constant_type = spirv::SpecializationType::FLOAT;
+      } else {
+        return cargo::make_unexpected("unknown `SpecializationType`");
+      }
+      constant.size_in_bits = entry.Size;
+    }
+    return {std::move(constants_map)};
+#endif
+  }
+
   auto specializable =
       spirv_ll::Context{}.getSpecializableConstants({code.data(), code.size()});
   if (!specializable) {
