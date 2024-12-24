@@ -242,7 +242,7 @@ host_allocation_info::create(cl_context context,
 
     OCL_CHECK(size > device->max_mem_alloc_size,
               return cargo::make_unexpected(CL_INVALID_BUFFER_SIZE));
-    OCL_CHECK(alignment > device_align,
+    OCL_CHECK(alignment > device_align && alignment % device_align,
               return cargo::make_unexpected(CL_INVALID_VALUE));
 
     max_align = device_align > max_align ? device_align : max_align;
