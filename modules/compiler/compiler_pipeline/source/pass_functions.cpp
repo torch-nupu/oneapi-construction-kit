@@ -208,7 +208,7 @@ void replaceConstantExpressionWithInstruction(llvm::Constant *const constant) {
             llvm::dyn_cast<llvm::ConstantExpr>(constant)) {
       newInst = constantExpr->getAsInstruction();
       // insert the instruction at the beginning of the entry block
-      newInst->insertBefore(useFunc->getEntryBlock().getFirstNonPHI());
+      newInst->insertBefore(useFunc->getEntryBlock().getFirstNonPHIIt());
     } else if (llvm::ConstantVector *constantVec =
                    llvm::dyn_cast<llvm::ConstantVector>(constant)) {
       // If it is a ConstantVector then only handle the case where it is
@@ -226,7 +226,7 @@ void replaceConstantExpressionWithInstruction(llvm::Constant *const constant) {
       llvm::Type *i32Ty = llvm::Type::getInt32Ty(constant->getContext());
       auto insert = llvm::InsertElementInst::Create(
           undef, splatVal, llvm::ConstantInt::get(i32Ty, 0));
-      insert->insertBefore(useFunc->getEntryBlock().getFirstNonPHI());
+      insert->insertBefore(useFunc->getEntryBlock().getFirstNonPHIIt());
       llvm::Value *zeros = llvm::ConstantAggregateZero::get(
           llvm::FixedVectorType::get(i32Ty, numEls));
       newInst = new llvm::ShuffleVectorInst(insert, undef, zeros);
@@ -242,7 +242,7 @@ void replaceConstantExpressionWithInstruction(llvm::Constant *const constant) {
         if (insertedIns) {
           insertNext->insertAfter(insertedIns);
         } else {
-          insertNext->insertBefore(useFunc->getEntryBlock().getFirstNonPHI());
+          insertNext->insertBefore(useFunc->getEntryBlock().getFirstNonPHIIt());
         }
         insertedIns = insertNext;
       }
@@ -519,6 +519,9 @@ llvm::BasicBlock *createLoop(llvm::BasicBlock *entry, llvm::BasicBlock *exit,
 
   // Set up all of our user PHIs
   for (unsigned i = 0, e = currIVs.size(); i != e; i++) {
+    // For convenience to callers, permit nullptr and skip over it.
+    if (!currIVs[i]) continue;
+
     auto *const phi = loopIR.CreatePHI(currIVs[i]->getType(), 2);
     llvm::cast<llvm::PHINode>(phi)->addIncoming(currIVs[i],
                                                 entryIR.GetInsertBlock());
@@ -542,6 +545,7 @@ llvm::BasicBlock *createLoop(llvm::BasicBlock *entry, llvm::BasicBlock *exit,
 
   // Update all of our PHIs
   for (unsigned i = 0, e = currIVs.size(); i != e; i++) {
+    if (!currIVs[i]) continue;
     llvm::cast<llvm::PHINode>(currIVs[i])->addIncoming(nextIVs[i], latch);
   }
 

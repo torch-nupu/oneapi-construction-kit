@@ -1,23 +1,6 @@
 name: CodeQL
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'source/**'
-      - 'clik/**'
-      - 'modules/**'
-      - 'examples/**'
-      - 'cmake/**'
-      - 'hal/**'
-      - '.github/actions/do_build_ock/**'
-      - '.github/actions/setup_build/**'
-      - '.github/workflows/codeql.yml'
-      - 'CMakeLists.txt'
   schedule:
     - cron: '19 9 * * 3'
 
@@ -32,6 +15,10 @@ jobs:
       # required to fetch internal or private CodeQL packs
       packages: read
     runs-on: ubuntu-22.04
+    container:
+      image: 'ghcr.io/uxlfoundation/ock_ubuntu_22.04-x86-64:latest'
+      volumes:
+        - ${{github.workspace}}:${{github.workspace}}
 
     steps:
       - name: Checkout repo
@@ -79,6 +66,10 @@ jobs:
       # required to fetch internal or private CodeQL packs
       packages: read
     runs-on: ubuntu-22.04
+    container:
+      image: 'ghcr.io/uxlfoundation/ock_ubuntu_22.04-x86-64:latest'
+      volumes:
+        - ${{github.workspace}}:${{github.workspace}}
 
     steps:
       - name: Checkout repo

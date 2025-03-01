@@ -1151,9 +1151,9 @@ Function *compiler::utils::Barrier::GenerateNewKernel(BarrierRegion &region) {
         // multiple return instructions in a kernel, if it does then clone
         // the instruction first.
         if (nullptr == entry_call->getParent()) {
-          entry_call->insertBefore(new_ret);
+          entry_call->insertBefore(new_ret->getIterator());
         } else {
-          entry_call->clone()->insertBefore(new_ret);
+          entry_call->clone()->insertBefore(new_ret->getIterator());
         }
       }
     } else if (ReturnInst *ret =
@@ -1185,7 +1185,7 @@ Function *compiler::utils::Barrier::GenerateNewKernel(BarrierRegion &region) {
   }
 
   BasicBlock *new_kernel_entry_block = &(new_kernel->getEntryBlock());
-  Instruction *insert_point = new_kernel_entry_block->getFirstNonPHIOrDbg();
+  Instruction *insert_point = &*new_kernel_entry_block->getFirstNonPHIOrDbg();
   auto *const cloned_barrier_call =
       region.barrier_inst ? insert_point : nullptr;
 
@@ -1290,7 +1290,7 @@ Function *compiler::utils::Barrier::GenerateNewKernel(BarrierRegion &region) {
   }
 
   // Iterate instruction from insert point at entry basic block.
-  insert_point = new_kernel_entry_block->getFirstNonPHIOrDbg();
+  insert_point = &*new_kernel_entry_block->getFirstNonPHIOrDbg();
   const RemapFlags remapFlags =
       RF_IgnoreMissingLocals | llvm::RF_ReuseAndMutateDistinctMDs;
   BasicBlock::iterator b_iter = insert_point->getIterator();

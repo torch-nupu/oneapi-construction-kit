@@ -36,15 +36,11 @@ runs:
         path: OpenCL-CTS
 
     - name: build opencl cts
-      shell: bash    
+      shell: bash
       env:
-        # TODO: host-x86_64-linux 'toolchain' - expand for other targets
-        CMAKE_TOOLCHAIN: "-DCMAKE_C_COMPILER=gcc -DCMAKE_C_FLAGS=-m64 -DCMAKE_CXX_COMPILER=g++ \
-                          -DCMAKE_CXX_FLAGS=-m64 -DPKG_CONFIG_EXECUTABLE=pkg-config"
+        CMAKE_TOOLCHAIN: "${{ steps.calc_vars.outputs.cmake_toolchain }}"
       run: |
-        # get spirv-as
-        sudo apt-get update
-        sudo apt-get install -y spirv-tools
+        echo CMAKE_TOOLCHAIN is: $CMAKE_TOOLCHAIN
         # apply patches
         pushd OpenCL-CTS
         git log -1
@@ -59,9 +55,6 @@ runs:
           -DCL_INCLUDE_DIR=$GITHUB_WORKSPACE/install_headers/include \
           -DCL_LIB_DIR=$GITHUB_WORKSPACE/install_icd/lib
         ninja -v
-        python3 $GITHUB_WORKSPACE/OpenCL-CTS/test_conformance/spirv_new/assemble_spirv.py -v \
-          --source-dir $GITHUB_WORKSPACE/OpenCL-CTS/test_conformance/spirv_new/spirv_asm \
-          --output-dir $GITHUB_WORKSPACE/test_conformance/spirv_bin
 
     - name: upload opencl cts artifacts
       uses: actions/upload-artifact@v4
@@ -77,5 +70,5 @@ runs:
           !test_conformance/**/*.ninja
           !test_conformance/test_common
           !test_conformance/test_common/**
-        retention-days: 1
+        retention-days: 7
 
