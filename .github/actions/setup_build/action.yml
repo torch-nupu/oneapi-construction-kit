@@ -23,53 +23,21 @@ inputs:
   cross_arch:
     description: 'Cross compilation architecture from: x86, arm, aarch64, riscv64. Default: "none" (no cross compile), will auto fetch native arch'
     default: "none"
-  clang_tidy:
-    description: 'Enable installing of clang-tidy (currently 19)'
-    type: boolean
-    default: false
-  
+  llvm_source:
+    description: 'source to get llvm from - one of install or cache'
+    default: "cache"
+
 runs:
   # We don't want a new docker just a list of steps, so mark as composite
   using: "composite"
   steps:
     - name: Install ubuntu prerequisites
+      # Note: most prereqs now installed in dockerfiles
       if: ${{ inputs.os == 'ubuntu' }}
       shell: bash
       run: |
-        if [ "${{ inputs.cross_arch }}" = "x86" ]; then sudo dpkg --add-architecture i386 ; fi
-        wget -qO - https://packages.lunarg.com/lunarg-signing-key-pub.asc | sudo apt-key add -
-        if [ "${{ inputs.ubuntu_version }}" = "20.04" ]; then sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.243-focal.list https://packages.lunarg.com/vulkan/1.3.243/lunarg-vulkan-1.3.243-focal.list; fi
-        if [ "${{ inputs.ubuntu_version }}" = "22.04" ]; then sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-1.3.243-jammy.list https://packages.lunarg.com/vulkan/1.3.243/lunarg-vulkan-1.3.243-jammy.list; fi
-        if [ "${{ inputs.ubuntu_version }}" = "24.04" ]; then sudo wget -qO /etc/apt/sources.list.d/lunarg-vulkan-noble.list https://packages.lunarg.com/vulkan/lunarg-vulkan-noble.list; fi
-
-        if [ "${{ inputs.clang_tidy }}" = "true" ]; then
-          wget -qO - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor - | sudo tee /usr/share/keyrings/llvm-archive-keyring.gpg >/dev/null
-          if [ "${{ inputs.ubuntu_version }}" = "20.04" ]; then echo 'deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/focal/ llvm-toolchain-focal-19 main' | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null; fi
-          if [ "${{ inputs.ubuntu_version }}" = "22.04" ]; then echo 'deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/jammy/ llvm-toolchain-jammy-19 main' | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null; fi
-          if [ "${{ inputs.ubuntu_version }}" = "24.04" ]; then echo 'deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] http://apt.llvm.org/noble/ llvm-toolchain-noble-19 main' | sudo tee /etc/apt/sources.list.d/llvm.list >/dev/null; fi
-        fi
-
-        sudo apt-get update
-        if [ "${{ inputs.clang_tidy }}" = "true" ]; then sudo apt-get install --yes clang-tidy-19; fi
-        pip install lit clang-format==19.1.0 virtualenv
-        sudo apt-get install --yes doxygen
-        sudo apt-get install --yes vulkan-sdk
-        if [ "${{ inputs.cross_arch }}" = "x86" ]; then \
-           sudo apt-get install --yes gcc-multilib g++-multilib libc6-dev:i386 lib32tinfo-dev; \
-        fi
-        if [ "${{ inputs.cross_arch }}" = "arm" ]; then \
-           sudo apt-get install --yes gcc-11-arm-linux-gnueabihf g++-11-arm-linux-gnueabihf; \
-        fi
-        if [ "${{ inputs.cross_arch }}" = "aarch64" ]; then \
-           sudo apt-get install --yes gcc-11-aarch64-linux-gnu g++-11-aarch64-linux-gnu; \
-        fi
-        if [ "${{ inputs.cross_arch }}" = "riscv64" ]; then \
-           sudo apt-get install --yes gcc-11-riscv64-linux-gnu g++-11-riscv64-linux-gnu; \
-        fi
-        if [ "${{ inputs.cross_arch }}" != "none" ] && [ "${{ inputs.cross_arch }}" != "x86" ]; then \
-           # Install QEMU for testing cross compilation.
-           sudo apt-get install --yes qemu-user; \
-        fi
+        # required for virtualenv running in docker
+        echo "PATH=$PATH:$HOME/.local/bin" >> $GITHUB_ENV
 
     - name: Install windows prerequisites
       if: ${{ inputs.os == 'windows' }}
@@ -108,17 +76,31 @@ runs:
         cat $GITHUB_OUTPUT
 
     - name: load llvm native
-      if: inputs.cross_arch != 'none'
+      if: inputs.llvm_source == 'cache'
       uses: actions/cache/restore@v4
       with:
         path: llvm_install/**
         key: llvm-${{ inputs.os }}-${{ steps.set_llvm_key.outputs.key_version }}-${{ steps.set_llvm_key.outputs.key_native_arch }}-v${{ inputs.llvm_version }}-${{ inputs.llvm_build_type }}
         fail-on-cache-miss: true
+
+    - name: install llvm native
+      if: inputs.llvm_source == 'install'
+      shell: bash
+      run: |
+        set -x
+        sudo apt update
+
+        sudo apt install -y llvm-${{ inputs.llvm_version }}-dev liblld-${{ inputs.llvm_version }}-dev libclang-${{ inputs.llvm_version }}-dev
+        sudo apt install -y libpolly-${{ inputs.llvm_version }}-dev clang-${{ inputs.llvm_version }}
+
+        ln -s /usr/lib/llvm-${{ inputs.llvm_version }} llvm_install
+
     - shell: bash
       if: inputs.cross_arch != 'none'    
       run: mv llvm_install llvm_install_native
 
-    - name: load llvm
+    - name: load llvm cross
+      if: inputs.cross_arch != 'none' && inputs.llvm_source == 'cache'
       uses: actions/cache/restore@v4
       with:
         path: llvm_install/**
@@ -126,10 +108,10 @@ runs:
         fail-on-cache-miss: true
 
       # note the PR testing usage should set 'save' to false, to avoid PR testing creating new caches on a branch
-    - name: Setup sccache
-      uses: hendrikmuhs/ccache-action@ed74d11c0b343532753ecead8a951bb09bb34bc9 # v1.2.14
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@53911442209d5c18de8a31615e0923161e435875 # v1.2.16
       with:
         max-size: 200M
-        key: sccache-build
-        variant: sccache
+        key: ccache-build-${{ inputs.os }}
+        variant: ccache
         save: ${{ inputs.save }}
