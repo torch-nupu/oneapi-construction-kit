@@ -184,6 +184,8 @@ void runFrontendPipeline(
   if (LP.has_value()) {
     MPM.addPass(std::move(LP.value()));
   }
+  module.setModuleIdentifier(module.getModuleIdentifier() +
+                             "__runFrontendPipeline__");
   MPM.run(module, PassMach->getMAM());
 }
 
@@ -1843,6 +1845,7 @@ Result BaseModule::finalize(
 
   llvm::CrashRecoveryContext CRC;
   llvm::CrashRecoveryContext::Enable();
+  clone->setModuleIdentifier(clone->getModuleIdentifier() + "__finalize__");
   const bool crashed =
       !CRC.RunSafely([&] { pm.run(*clone, pass_mach->getMAM()); });
   llvm::CrashRecoveryContext::Disable();

@@ -157,6 +157,7 @@ PreservedAnalyses RunVeczPass::run(Module &M, ModuleAnalysisManager &MAM) {
   }
 
   // Vectorize everything
+  M.setModuleIdentifier(M.getModuleIdentifier() + "__RunVeczPass__");
   PM.run(M, Mach.getMAM());
 
   auto AllOnModule = llvm::PreservedAnalyses::allInSet<AllAnalysesOn<Module>>();

@@ -50,7 +50,7 @@ cargo::expected<compiler::spirv::DeviceInfo, cargo::result> getSPIRVDeviceInfo(
   auto &spvCapabilities = spvDeviceInfo.capabilities;
 
   // A set of capabilities shared between the OpenCL profiles we support.
-  static std::array<spv::Capability, 15> sharedCapabilities = {
+  static std::array<spv::Capability, 16> sharedCapabilities = {
       spv::CapabilityAddresses,
       spv::CapabilityFloat16Buffer,
       spv::CapabilityGroups,
@@ -66,6 +66,8 @@ cargo::expected<compiler::spirv::DeviceInfo, cargo::result> getSPIRVDeviceInfo(
       spv::CapabilityOptNoneINTEL,
       spv::CapabilityMemoryAccessAliasingINTEL,
       spv::CapabilitySubgroupShuffleINTEL,
+      // TODO(nupu): support CapabilityGroupNonUniformArithmetic
+      spv::CapabilityGroupNonUniformArithmetic,
   };
 
   if (profile == "FULL_PROFILE") {
